@@ -511,8 +511,8 @@ searchWorker.onmessage = (e) => {
           ..._pendingCacheMeta,
           indexA: _partialChunksA,
           totalChunks: progressA.max,
-          summaries: null,
-          questions: null,
+          summaries: _partialSummaries,
+          questions: _partialQuestions,
           promptB: _activePromptB,
           promptC: _activePromptC,
           metrics: { a: null, b: null, c: null },
@@ -672,8 +672,8 @@ llmWorkerC.onmessage = (e) => {
       break;
     case "b-entry":
       searchWorker.postMessage({ type: "add-c", index: msg.index, output: msg.output, embedding: msg.embedding });
+      _partialQuestions.push({ output: msg.output, outputEmbedding: msg.embedding });
       if (_pendingCacheKey && _partialChunksA.length > 0) {
-        _partialQuestions.push({ output: msg.output, outputEmbedding: msg.embedding });
         saveCache(_pendingCacheKey, {
           ..._pendingCacheMeta,
           indexA: _partialChunksA,

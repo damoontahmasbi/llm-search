@@ -157,6 +157,10 @@ metrics: { a, b, c }
 
 **Partial writes:** every chunk writes immediately via `chunk-a` / `b-entry` / `b-entry` (C) handlers — progress survives page refresh mid-build.
 
+**Concurrent write safety:** A and B start at the same time (cache miss path). The `chunk-a` handler uses `_partialSummaries`/`_partialQuestions` (not `null`) so that a late A-chunk write never stomps on B or C progress already written to the cache. `_partialQuestions.push` in the C `b-entry` handler is unconditional (outside the cache guard), matching B's pattern — this ensures the tracking array stays accurate even if the save guard fires false.
+
+**`_partialChunksA` in cache-hit path:** set synchronously from `cached.indexA` before any workers start (line ~819), so `_partialChunksA.length > 0` is always true by the time C fires its first `b-entry`.
+
 **Prompt invalidation:** if `promptB`/`promptC` changed within a key, the affected arm's `startIndex` resets to 0 and its cached data is discarded. The key itself is unchanged.
 
 **Cache manager UI:** `<details id="cache-manager">` opens lazily, renders all entries with label / models / chunk count / A-B-C status, and a trash icon per row.
