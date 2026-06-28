@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Semantic vs LLM-Indexed Search Demo</title>
+<link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <header>
+    <h1>Semantic vs LLM-Indexed Search</h1>
+    <p class="subtitle">
+      Three indexing strategies compared side by side. Paste a YouTube URL, text file, or plain text — chunking, embedding, LLM inference, and search all run in your browser.
+    </p>
+  </header>
+
+  <section id="load-section">
+    <div class="input-tabs">
+      <button class="tab-btn active" data-tab="youtube">YouTube URL</button>
+      <button class="tab-btn" data-tab="file">Text file</button>
+      <button class="tab-btn" data-tab="paste">Paste text</button>
+    </div>
+
+    <div class="input-area">
+      <div id="tab-youtube" class="tab-panel">
+        <input id="url-input" type="text" placeholder="https://www.youtube.com/watch?v=..." />
+      </div>
+      <div id="tab-file" class="tab-panel hidden">
+        <label for="file-input" class="file-btn">Choose .txt file…</label>
+        <input id="file-input" type="file" accept=".txt,text/plain" />
+        <span id="file-name" class="file-name">No file chosen</span>
+      </div>
+      <div id="tab-paste" class="tab-panel hidden">
+        <textarea id="paste-input" rows="5" placeholder="Paste transcript or any text here…"></textarea>
+      </div>
+    </div>
+
+    <details id="model-settings">
+      <summary>Model Settings</summary>
+      <div class="model-config">
+
+        <div class="model-section">
+          <div class="model-section-title">Embedding model <span class="model-section-note">(all arms — each model keeps its own cached index)</span></div>
+          <div class="model-opts">
+            <label class="model-opt"><input type="radio" name="embed-model" value="Xenova/all-MiniLM-L6-v2" checked><span class="model-opt-name">all-MiniLM-L6-v2</span><span class="model-opt-meta">23 MB · Fast, decent quality (default)</span></label>
+            <label class="model-opt"><input type="radio" name="embed-model" value="Xenova/all-MiniLM-L12-v2"><span class="model-opt-name">all-MiniLM-L12-v2</span><span class="model-opt-meta">33 MB · Slightly better quality</span></label>
+            <label class="model-opt"><input type="radio" name="embed-model" value="Xenova/all-mpnet-base-v2"><span class="model-opt-name">all-mpnet-base-v2</span><span class="model-opt-meta">86 MB · Higher quality, slower</span></label>
+            <label class="model-opt"><input type="radio" name="embed-model" value="Xenova/bge-small-en-v1.5"><span class="model-opt-name">bge-small-en-v1.5</span><span class="model-opt-meta">33 MB · Strong retrieval performance</span></label>
+            <label class="model-opt"><input type="radio" name="embed-model" value="Xenova/bge-base-en-v1.5"><span class="model-opt-name">bge-base-en-v1.5</span><span class="model-opt-meta">109 MB · Best retrieval, slowest</span></label>
+          </div>
+        </div>
+
+        <div class="model-section">
+          <div class="model-section-title">LLM model <span class="model-section-note">(Arms B &amp; C — each model keeps its own cached index)</span></div>
+          <div class="llm-mode-toggle">
+            <button class="mode-btn active" data-mode="local" type="button">In-browser</button>
+            <button class="mode-btn" data-mode="server" type="button">Local server</button>
+          </div>
+          <div id="llm-local-panel">
+            <div class="model-opts">
+              <label class="model-opt"><input type="radio" name="llm-model" value="HuggingFaceTB/SmolLM2-360M-Instruct" checked><span class="model-opt-name">SmolLM2-360M-Instruct</span><span class="model-opt-meta">360 MB · Fastest (default)</span></label>
+              <label class="model-opt"><input type="radio" name="llm-model" value="HuggingFaceTB/SmolLM2-1.7B-Instruct"><span class="model-opt-name">SmolLM2-1.7B-Instruct</span><span class="model-opt-meta">1.7 GB · Better quality, ~5× slower</span></label>
+              <label class="model-opt"><input type="radio" name="llm-model" value="Qwen/Qwen2.5-0.5B-Instruct"><span class="model-opt-name">Qwen2.5-0.5B-Instruct</span><span class="model-opt-meta">494 MB · Good balance of speed &amp; quality</span></label>
+              <label class="model-opt"><input type="radio" name="llm-model" value="Qwen/Qwen2.5-1.5B-Instruct"><span class="model-opt-name">Qwen2.5-1.5B-Instruct</span><span class="model-opt-meta">1.5 GB · High quality, slow</span></label>
+            </div>
+          </div>
+          <div id="llm-server-panel" class="hidden">
+            <div class="server-row">
+              <span class="server-field-label">Preset</span>
+              <select id="server-preset">
+                <option value="ollama">Ollama (localhost:11434)</option>
+                <option value="lmstudio">LM Studio (localhost:1234)</option>
+                <option value="llamacpp">llama.cpp (localhost:8080)</option>
+                <option value="custom">Custom</option>
+              </select>
+            </div>
+            <div class="server-row">
+              <span class="server-field-label">Server URL</span>
+              <input id="server-url" type="text" placeholder="http://localhost:11434" />
+            </div>
+            <div class="server-row">
+              <span class="server-field-label">Model name</span>
+              <input id="server-model-name" type="text" placeholder="e.g. llama3.2, mistral" />
+            </div>
+            <div class="server-row">
+              <span class="server-field-label">API key</span>
+              <input id="server-key" type="password" placeholder="Optional — leave blank for local servers" />
+            </div>
+            <div class="server-row">
+              <button id="server-test-btn" type="button" class="btn-test">Test connection</button>
+              <span id="server-test-result" class="server-test-result"></span>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </details>
+
+    <details id="prompt-settings">
+      <summary>LLM Prompt Settings</summary>
+      <div class="prompt-config">
+        <div class="prompt-group">
+          <div class="prompt-header">
+            <span class="prompt-arm-label">Arm B</span>
+            <select id="preset-b">
+              <option value="summary">Summarization</option>
+              <option value="questions">Question generation</option>
+              <option value="custom">Custom</option>
+            </select>
+          </div>
+          <textarea id="prompt-b" rows="4" spellcheck="false">Summarize this transcript excerpt in 2-3 sentences:
+
+{chunk}
+
+Summary:</textarea>
+        </div>
+        <div class="prompt-group">
+          <div class="prompt-header">
+            <span class="prompt-arm-label">Arm C</span>
+            <select id="preset-c">
+              <option value="questions">Question generation</option>
+              <option value="summary">Summarization</option>
+              <option value="custom">Custom</option>
+            </select>
+          </div>
+          <textarea id="prompt-c" rows="4" spellcheck="false">{chunk}
+
+Questions this summary answers:
+1.</textarea>
+        </div>
+      </div>
+    </details>
+
+    <details id="cache-manager">
+      <summary>Cached Indexes</summary>
+      <div id="cache-list"></div>
+    </details>
+
+    <div class="action-row">
+      <button id="load-btn">Load &amp; Index</button>
+      <button id="download-btn" class="btn-secondary" disabled>Download script</button>
+    </div>
+
+    <div class="status-row">
+      <div id="load-status" class="status"></div>
+    </div>
+    <div id="download-progress" class="hidden download-row">
+      <span class="download-label">Embedding model</span>
+      <progress id="download-bar" value="0" max="100"></progress>
+      <span id="download-text" class="download-text"></span>
+    </div>
+    <div id="load-status-b" class="status status-b"></div>
+    <div id="download-progress-b" class="hidden download-row">
+      <span class="download-label">Arm B model</span>
+      <progress id="download-bar-b" value="0" max="100"></progress>
+      <span id="download-text-b" class="download-text"></span>
+    </div>
+    <div id="load-status-c" class="status status-b"></div>
+    <div id="download-progress-c" class="hidden download-row">
+      <span class="download-label">Arm C model</span>
+      <progress id="download-bar-c" value="0" max="100"></progress>
+      <span id="download-text-c" class="download-text"></span>
+    </div>
+  </section>
+
+  <section id="index-progress" class="hidden">
+    <div class="progress-row">
+      <span class="arm-label">Arm A — direct chunk embedding</span>
+      <progress id="progress-a" value="0" max="1"></progress>
+      <span id="progress-a-text"></span>
+    </div>
+    <div class="progress-row">
+      <span class="arm-label">Arm B — LLM summary + embedding</span>
+      <progress id="progress-b" value="0" max="1"></progress>
+      <span id="progress-b-text"></span>
+    </div>
+    <div class="progress-row">
+      <span class="arm-label">Arm C — questions from summaries + embedding</span>
+      <progress id="progress-c" value="0" max="1"></progress>
+      <span id="progress-c-text"></span>
+    </div>
+  </section>
+
+  <section id="search-section" class="hidden">
+    <input id="query-input" type="text" placeholder="Search the transcript..." />
+    <button id="search-btn">Search</button>
+  </section>
+
+  <section id="results-section" class="hidden">
+    <div class="results-column">
+      <h2>Arm A: Semantic</h2>
+      <p class="arm-desc">Query embedded and ranked by cosine similarity against raw chunk embeddings.</p>
+      <div id="results-a" class="results-list"></div>
+    </div>
+    <div class="results-column">
+      <h2>Arm B: Summary + RRF</h2>
+      <p class="arm-desc">Each chunk summarized in 2-3 sentences. RRF fuses raw chunk similarity and summary similarity.</p>
+      <div id="results-b" class="results-list"></div>
+    </div>
+    <div class="results-column">
+      <h2>Arm C: Questions + RRF</h2>
+      <p class="arm-desc">2-3 questions generated from each Arm B summary. RRF fuses raw chunk similarity and question similarity.</p>
+      <div id="results-c" class="results-list"></div>
+    </div>
+  </section>
+
+  <script type="module" src="app.js"></script>
+</body>
+</html>
