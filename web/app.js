@@ -1,5 +1,12 @@
 const SERVER_URL = "http://localhost:8000";
 
+// ── Theme ─────────────────────────────────────────────────────────────────────
+(function () {
+  const stored = localStorage.getItem("theme");
+  const dark = stored ? stored === "dark" : window.matchMedia("(prefers-color-scheme: dark)").matches;
+  document.documentElement.classList.toggle("dark", dark);
+})();
+
 const PROMPTS = {
   summary: `Summarize this transcript excerpt in 2-3 sentences:\n\n{chunk}\n\nSummary:`,
   questions: `{chunk}\n\nQuestions this summary answers:\n1.`,
@@ -323,6 +330,11 @@ document.querySelectorAll(".tab-btn").forEach((btn) => {
 
 fileInput.addEventListener("change", () => {
   fileName.textContent = fileInput.files[0]?.name ?? "No file chosen";
+});
+
+document.getElementById("theme-btn").addEventListener("click", () => {
+  const dark = document.documentElement.classList.toggle("dark");
+  localStorage.setItem("theme", dark ? "dark" : "light");
 });
 
 function offerDownload(text, name) {
