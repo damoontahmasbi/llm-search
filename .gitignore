@@ -4,3 +4,10 @@ __pycache__/
 *.pyc
 web/.well-known/
 TODO.md
+
+# --- IDEs & OS Files ---
+.DS_Store
+.vscode/
+.idea/
+.gemini/
+.claude/

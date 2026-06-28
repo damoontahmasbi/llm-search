@@ -1,4 +1,6 @@
-const SERVER_URL = "http://localhost:8000";
+const DEFAULT_TRANSCRIPT_URL = (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1")
+  ? "http://localhost:8000"
+  : "";
 
 // ── Theme ─────────────────────────────────────────────────────────────────────
 (function () {
@@ -56,6 +58,7 @@ const promptBEl = document.getElementById("prompt-b");
 const promptCEl = document.getElementById("prompt-c");
 const presetBEl = document.getElementById("preset-b");
 const presetCEl = document.getElementById("preset-c");
+const transcriptUrlInput = document.getElementById("transcript-url");
 
 // ── Workers ──────────────────────────────────────────────────────────────────
 const searchWorker = new Worker("worker.js", { type: "module" });
@@ -335,6 +338,11 @@ fileInput.addEventListener("change", () => {
 document.getElementById("theme-btn").addEventListener("click", () => {
   const dark = document.documentElement.classList.toggle("dark");
   localStorage.setItem("theme", dark ? "dark" : "light");
+});
+
+transcriptUrlInput.value = localStorage.getItem("transcriptUrl") ?? DEFAULT_TRANSCRIPT_URL;
+transcriptUrlInput.addEventListener("input", () => {
+  localStorage.setItem("transcriptUrl", transcriptUrlInput.value.trim() || DEFAULT_TRANSCRIPT_URL);
 });
 
 function offerDownload(text, name) {
@@ -708,7 +716,8 @@ llmWorkerC.onmessage = (e) => {
 
 // ── Transcript fetching ───────────────────────────────────────────────────────
 async function fetchTranscript(url) {
-  const res = await fetch(`${SERVER_URL}/api/transcript`, {
+  const serverUrl = transcriptUrlInput.value.trim() || DEFAULT_TRANSCRIPT_URL;
+  const res = await fetch(`${serverUrl}/api/transcript`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ url }),
