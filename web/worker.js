@@ -64,13 +64,20 @@ function snapHeap() {
   return self.performance?.memory?.usedJSHeapSize ?? null;
 }
 
+// transformers.js dispatches status:"download" for every file load — cache hit or real
+// network fetch alike — so it can't be used to tell them apart. Instead, treat a file as a
+// real download only once its progress events have spanned more than this long: cache reads
+// (even for large files) resolve in a single burst well under this, real fetches don't.
+const DOWNLOAD_MS_THRESHOLD = 500;
+
 function makeProgressCallback() {
   const fileProgress = {};
+  let firstProgressAt = null;
   let isNetworkDownload = false;
   return (event) => {
-    if (event.status === "download") {
-      isNetworkDownload = true;
-    } else if (event.status === "progress" && event.total) {
+    if (event.status === "progress" && event.total) {
+      if (firstProgressAt === null) firstProgressAt = Date.now();
+      if (!isNetworkDownload && Date.now() - firstProgressAt > DOWNLOAD_MS_THRESHOLD) isNetworkDownload = true;
       fileProgress[event.file] = { loaded: event.loaded, total: event.total };
       const loaded = Object.values(fileProgress).reduce((s, f) => s + f.loaded, 0);
       const total = Object.values(fileProgress).reduce((s, f) => s + f.total, 0);
@@ -85,7 +92,24 @@ function makeProgressCallback() {
   };
 }
 
+// transformers.js swallows Cache Storage write failures (e.g. QuotaExceededError) down to a
+// console.warn — the model then silently never persists and re-downloads every load. Surface
+// storage pressure to the user before that happens instead of failing invisibly.
+async function checkStorageQuota() {
+  if (!self.navigator?.storage?.estimate) return null;
+  try {
+    const { usage, quota } = await self.navigator.storage.estimate();
+    if (quota && usage / quota > 0.9) return { usage, quota };
+  } catch { /* not available in this browser/context */ }
+  return null;
+}
+
 async function loadPipeline(task, model, retries = 3) {
+  const pressure = await checkStorageQuota();
+  if (pressure) {
+    const pct = Math.round((pressure.usage / pressure.quota) * 100);
+    post({ type: "status", message: `Warning: browser storage is ${pct}% full — the model cache may fail to save and re-download every time. Delete old cached indexes to free space.` });
+  }
   for (let attempt = 1; attempt <= retries; attempt++) {
     try {
       const result = await pipeline(task, model, { progress_callback: makeProgressCallback() });

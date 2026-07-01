@@ -23,11 +23,10 @@ Open `http://localhost:3000`. The **Text file** and **Paste text** tabs work wit
 YouTube blocks transcript requests from cloud/hosted servers, so the YouTube URL tab only works when you run this project locally. In a separate terminal:
 
 ```bash
-cd server
-python3 -m venv .venv
-source .venv/bin/activate
-pip install -r requirements.txt
-uvicorn main:app --reload --port 8000
+python3 -m venv server/.venv
+source server/.venv/bin/activate
+pip install -r server/requirements.txt
+uvicorn --app-dir server main:app --reload --port 8000
 ```
 
 ## Usage
