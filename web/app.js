@@ -72,7 +72,7 @@ llmWorkerC.onerror = (e) => { setStatusC(`Arm C error: ${e.message}`, true); _cD
 // ── State ─────────────────────────────────────────────────────────────────────
 let lastQueryEmbedding = null;
 let metricsAData = null;
-let activeTab = "youtube";
+let activeTab = "file";
 let currentVideoId = null;
 let _downloadData = null;
 let _armAStart = null;
@@ -715,7 +715,37 @@ llmWorkerC.onmessage = (e) => {
 };
 
 // ── Transcript fetching ───────────────────────────────────────────────────────
+
+// Try the browser extension first (avoids cloud IP blocks on YouTube).
+// Falls back to the server if the extension is not installed.
+function fetchTranscriptViaExtension(url) {
+  return new Promise((resolve, reject) => {
+    const requestId = Math.random().toString(36).slice(2);
+    const timeout = setTimeout(() => {
+      window.removeEventListener("message", handler);
+      reject(new Error("extension-not-available"));
+    }, 3000);
+
+    function handler(event) {
+      if (event.source !== window) return;
+      if (event.data?.type !== "YT_TRANSCRIPT_RESPONSE") return;
+      if (event.data?.requestId !== requestId) return;
+      clearTimeout(timeout);
+      window.removeEventListener("message", handler);
+      resolve(event.data);
+    }
+
+    window.addEventListener("message", handler);
+    window.postMessage({ type: "YT_FETCH_TRANSCRIPT", url, requestId }, "*");
+  });
+}
+
 async function fetchTranscript(url) {
+  try {
+    return await fetchTranscriptViaExtension(url);
+  } catch (err) {
+    if (err.message !== "extension-not-available") throw err;
+  }
   const serverUrl = transcriptUrlInput.value.trim() || DEFAULT_TRANSCRIPT_URL;
   const res = await fetch(`${serverUrl}/api/transcript`, {
     method: "POST",

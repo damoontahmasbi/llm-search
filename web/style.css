@@ -194,6 +194,13 @@ section {
   white-space: nowrap;
 }
 
+.tab-note {
+  margin: 0 0 0.4rem;
+  font-size: 0.85rem;
+  color: var(--text-3);
+}
+.tab-note a { color: #2563eb; }
+
 #url-input {
   width: 100%;
   box-sizing: border-box;

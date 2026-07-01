@@ -28,17 +28,19 @@ llm-search-demo/
 ## How to run
 
 ```bash
-# Server
+# Web — any static server works. Text file / paste tabs need nothing else.
+python -m http.server 3000 --directory web
+
+# Server — only needed for the YouTube URL tab
 cd server
 python -m venv .venv && source .venv/bin/activate
 pip install -r requirements.txt
 uvicorn main:app --reload          # listens on http://localhost:8000
-
-# Web — any static server works
-python -m http.server 3000 --directory web
 ```
 
 `SERVER_URL` in `web/app.js` line 1 must match the server address (default `http://localhost:8000`).
+
+**YouTube URL tab is local-only:** YouTube blocks transcript fetches from cloud/hosted IPs, so this tab (now the third tab, `web/index.html`) only works when the transcript server runs on the same machine as the browser. It carries a `.tab-note` explaining this and linking to the repo. Default active tab is now `file` (see `activeTab` init in `app.js`), not `youtube`.
 
 ---
 
