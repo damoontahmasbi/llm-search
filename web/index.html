@@ -113,6 +113,7 @@
 
     <details id="prompt-settings">
       <summary>LLM Prompt Settings</summary>
+      <p class="tab-note">Arms B and C run sequentially, not independently: Arm B summarizes each chunk first, then Arm C generates questions from Arm B's summaries (starting once a few are ready). Edit either prompt below before indexing to change what gets embedded for that arm and improve its search results — e.g. ask for more specific summaries, or questions phrased closer to how you actually search.</p>
       <div class="prompt-config">
         <div class="prompt-group">
           <div class="prompt-header">

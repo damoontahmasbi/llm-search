@@ -28,14 +28,13 @@ llm-search-demo/
 ## How to run
 
 ```bash
-# Web — any static server works. Text file / paste tabs need nothing else.
+# Web — any static server works. Text file / paste tabs need nothing else. Run from repo root.
 python -m http.server 3000 --directory web
 
-# Server — only needed for the YouTube URL tab
-cd server
-python -m venv .venv && source .venv/bin/activate
-pip install -r requirements.txt
-uvicorn main:app --reload          # listens on http://localhost:8000
+# Server — only needed for the YouTube URL tab. Also run from repo root.
+python -m venv server/.venv && source server/.venv/bin/activate
+pip install -r server/requirements.txt
+uvicorn --app-dir server main:app --reload --port 8000   # listens on http://localhost:8000
 ```
 
 `SERVER_URL` in `web/app.js` line 1 must match the server address (default `http://localhost:8000`).
